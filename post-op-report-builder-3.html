@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Post-Op Report">
+<meta name="theme-color" content="#1c2630">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>Post-Op Report</title>
+<style>
+  :root{
+    --ink:#1c2630; --steel:#4a5b6a; --line:#dde3e7; --paper:#f4f6f7; --panel:#fff;
+    --amber:#c98a2c; --good:#2f7a4f; --bad:#b3432f;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:-apple-system,'Segoe UI',Arial,sans-serif; background:var(--paper); color:var(--ink); padding-bottom:40px; }
+  header{ background:var(--ink); color:#fff; padding:16px; }
+  header h1{ margin:0; font-size:1.15rem; }
+  main{ max-width:640px; margin:0 auto; padding:12px; }
+
+  .top{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:12px; }
+  .daypills{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .daypill{ flex:1; min-width:38px; padding:8px 0; text-align:center; border:1px solid var(--line); border-radius:6px; background:#fff; font-size:.8rem; cursor:pointer; }
+  .daypill.active{ background:var(--amber); border-color:var(--amber); color:#1c2630; font-weight:700; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  label{ display:block; font-size:.72rem; color:var(--steel); margin-bottom:3px; }
+  input, select, textarea{ width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:6px; font-size:1rem; background:#fff; color:var(--ink); }
+  .field{ margin-bottom:0; }
+
+  details.section{ background:var(--panel); border:1px solid var(--line); border-radius:8px; margin-bottom:10px; overflow:visible; }
+  details.section summary{
+    list-style:none; cursor:pointer; padding:13px 14px; font-weight:600; font-size:.95rem;
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  details.section summary::-webkit-details-marker{ display:none; }
+  details.section summary::after{ content:'▾'; color:var(--steel); transition:transform .15s; }
+  details.section[open] summary::after{ transform:rotate(180deg); }
+  .section-body{ padding:0 14px 14px; }
+  .include-toggle{ display:flex; align-items:center; gap:5px; font-size:.72rem; font-weight:400; color:var(--steel); white-space:nowrap; }
+  .include-toggle input{ width:auto; }
+
+  .entry{ border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; background:#fafbfc; }
+  .entry.compact{ padding:8px; margin-bottom:6px; }
+  .entry.compact label{ font-size:.66rem; margin-bottom:2px; }
+  .entry.compact input, .entry.compact select{ padding:6px 8px; font-size:.86rem; }
+  .entry.compact .entry-fields{ gap:6px; }
+  .entry-fields{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .entry-fields .full{ grid-column:1 / -1; }
+  .entry-top{ display:flex; justify-content:flex-end; margin-bottom:6px; }
+  .rm{ background:none; border:none; color:var(--bad); font-size:.95rem; cursor:pointer; padding:2px 6px; }
+  .addbtn{ width:100%; padding:11px; background:#fff; border:1px dashed #b7c0c7; border-radius:6px; color:var(--steel); font-size:.88rem; cursor:pointer; margin-top:2px; }
+
+  .flagrow{ display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .flagrow:last-child{ border-bottom:none; }
+  .flagrow .fname{ flex:1.3; font-size:.85rem; }
+  .flagrow select{ flex:.8; }
+  .flagrow input{ flex:1.3; }
+
+  .listedit{ background:#f7f4ec; border-color:#e3d9bd; }
+  .listedit summary{ color:#7a5f1f; }
+  .listedit label{ margin-top:10px; }
+  .listedit textarea{ min-height:52px; resize:vertical; font-family:inherit; font-size:.85rem; }
+  .listedit .hint{ font-size:.68rem; color:var(--steel); margin-top:2px; }
+
+  .actionbar{ max-width:640px; margin:16px auto 0; padding:0 12px; display:flex; gap:8px; flex-wrap:wrap; }
+  .actionbar button{ flex:1; min-width:120px; padding:12px; border-radius:6px; border:1px solid var(--line); background:#fff; font-size:.88rem; cursor:pointer; }
+  .actionbar button.primary{ background:var(--amber); border-color:var(--amber); color:#1c2630; font-weight:700; }
+  .actionbar button.danger{ color:var(--bad); border-color:var(--bad); }
+  .status{ max-width:640px; margin:8px auto; padding:0 12px; font-size:.78rem; color:var(--steel); text-align:center; }
+
+  #output{ max-width:640px; margin:14px auto; background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; display:none; }
+  #output.show{ display:block; }
+  .combo-wrap{ position:relative; }
+  .combo-panel{
+    display:none; position:absolute; top:100%; left:0; right:0; z-index:50;
+    background:#fff; border:1px solid #b7c0c7; border-top:none; border-radius:0 0 6px 6px;
+    max-height:220px; overflow-y:auto; box-shadow:0 6px 14px rgba(0,0,0,.15);
+  }
+  .combo-panel.open{ display:block; }
+  .combo-option{ display:block; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid #f0f2f3; padding:10px 12px; font-size:.92rem; font-family:inherit; color:var(--ink); cursor:pointer; }
+  .combo-option:last-child{ border-bottom:none; }
+  .combo-option:active{ background:#eef2f4; }
+  .combo-empty{ padding:10px 12px; font-size:.85rem; color:var(--steel); font-style:italic; }
+  .photo-preview{ max-width:var(--photo-thumb-size, 90px); max-height:var(--photo-thumb-size, 90px); }
+</style>
+</head>
+<body>
+
+<header><h1>Post-Op Report</h1></header>
+
+<main>
+
+  <div class="top">
+    <div class="daypills" id="daypills"></div>
+    <div class="row2">
+      <div class="field"><label>Date</label><input id="f_date" type="date"></div>
+      <div class="field"><label>Post-Op Score (%)</label><input id="f_score" type="number" step="0.01" placeholder="e.g. 99.48"></div>
+    </div>
+  </div>
+
+  <details class="section listedit" id="listsSection">
+    <summary>⚙ Manage dropdown lists <span style="font-weight:400;font-size:.72rem;color:var(--steel);">(units, products, locations, areas, actions)</span></summary>
+    <div class="section-body">
+      <label>Photo size (thumbnails + report)</label>
+      <select id="photoSizeSelect" style="margin-bottom:10px;">
+        <option value="small">Small</option>
+        <option value="medium">Medium (default)</option>
+        <option value="large">Large</option>
+      </select>
+      <label>Units (one per line)</label>
+      <textarea id="listUnits"></textarea>
+      <label>Product details (one per line)</label>
+      <textarea id="listProducts"></textarea>
+      <label>ALDI Products (one per line)</label>
+      <textarea id="listAldiProducts"></textarea>
+      <label>Coles Products (one per line)</label>
+      <textarea id="listColesProducts"></textarea>
+      <label>Locations (one per line)</label>
+      <textarea id="listLocations"></textarea>
+      <label>Observation areas (one per line)</label>
+      <textarea id="listAreas"></textarea>
+      <label>Actions (one per line)</label>
+      <textarea id="listActions"></textarea>
+      <label>Observation phrases (one per line)</label>
+      <textarea id="listObservations"></textarea>
+      <label>Probe comments (one per line)</label>
+      <textarea id="listProbeComments"></textarea>
+      <label>Probe actions (one per line)</label>
+      <textarea id="listProbeActions"></textarea>
+      <label>Oxybaby unit IDs (one per line)</label>
+      <textarea id="listOxyUnits"></textarea>
+      <label>Probe IDs (one per line)</label>
+      <textarea id="listProbeIds"></textarea>
+      <label>Observation statuses (one per line)</label>
+      <textarea id="listStatuses"></textarea>
+      <div class="hint">Add, remove, or edit any line — changes save automatically and update every matching dropdown/suggestion in the app.</div>
+    </div>
+  </details>
+
+  <details class="section" open>
+    <summary>Summary Flags <span class="include-toggle"><input type="checkbox" data-section="flags" checked> include</span></summary>
+    <div class="section-body" id="flagsBody"></div>
+  </details>
+
+  <details class="section">
+    <summary>Observations <span class="include-toggle"><input type="checkbox" data-section="obs" checked> include</span></summary>
+    <div class="section-body">
+      <div id="obsList"></div>
+      <button class="addbtn" onclick="addObs()">+ Add observation</button>
+    </div>
+  </details>
+
+  <details class="section">
+    <summary>Carry Over <span class="include-toggle"><input type="checkbox" data-section="carry" checked> include</span></summary>
+    <div class="section-body">
+      <div id="carryList"></div>
+      <button class="addbtn" onclick="addCarry()">+ Add item</button>
+    </div>
+  </details>
+
+  <details class="section">
+    <summary>Product Control (FIFO) <span class="include-toggle"><input type="checkbox" data-section="fifo" checked> include</span></summary>
+    <div class="section-body">
+      <div id="fifoList"></div>
+      <button class="addbtn" onclick="addFifo()">+ Add item</button>
+    </div>
+  </details>
+
+  <details class="section">
+    <summary>QA Hold Shelf <span class="include-toggle"><input type="checkbox" data-section="qahold" checked> include</span></summary>
+    <div class="section-body">
+      <div id="qaholdList"></div>
+      <button class="addbtn" onclick="addQahold()">+ Add item</button>
+    </div>
+  </details>
+
+  <details class="section">
+    <summary>ON QA HOLD: For Inspection and Approval <span class="include-toggle"><input type="checkbox" data-section="onqahold" checked> include</span></summary>
+    <div class="section-body">
+      <div id="onQaHoldList"></div>
+      <button class="addbtn" onclick="addOnQaHold()">+ Add item</button>
+    </div>
+  </details>
+
+  <details class="section" id="probeSection">
+    <summary>Probe Calibration <span class="include-toggle"><input type="checkbox" data-section="probe" checked> include</span></summary>
+    <div class="section-body">
+      <div id="probeBody"></div>
+      <button class="addbtn" onclick="addProbe()">+ Add probe</button>
+    </div>
+  </details>
+
+  <details class="section">
+    <summary>Oxybaby Calibration <span class="include-toggle"><input type="checkbox" data-section="oxybaby" checked> include</span></summary>
+    <div class="section-body">
+      <div id="oxybabyList"></div>
+      <button class="addbtn" onclick="addOxybaby()">+ Add unit</button>
+    </div>
+  </details>
+
+  <details class="section">
+    <summary>Callouts <span class="include-toggle"><input type="checkbox" data-section="callouts" checked> include</span></summary>
+    <div class="section-body">
+      <div id="calloutList"></div>
+      <button class="addbtn" onclick="addCallout()">+ Add callout</button>
+    </div>
+  </details>
+
+</main>
+
+<div id="output"></div>
+
+<div class="actionbar">
+  <button class="primary" onclick="generate()">Generate report</button>
+  <button onclick="copyOut()">Copy for email</button>
+  <button onclick="saveDraft()">Save now</button>
+  <button onclick="loadDraft()">Load a different date</button>
+  <button class="danger" onclick="clearData()">Clear data</button>
+</div>
+<div class="actionbar">
+  <button onclick="exportData()">Export all data</button>
+  <button onclick="document.getElementById('importFile').click()">Import data</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none;">
+</div>
+<div class="status" id="status"></div>
+
+<datalist id="dl_units"></datalist>
+<datalist id="dl_products"></datalist>
+<datalist id="dl_locations"></datalist>
+<datalist id="dl_areas"></datalist>
+<datalist id="dl_actions"></datalist>
+<datalist id="dl_observations"></datalist>
+<datalist id="dl_probecomments"></datalist>
+<datalist id="dl_probeactions"></datalist>
+<datalist id="dl_oxyunits"></datalist>
+<datalist id="dl_probeids"></datalist>
+<datalist id="dl_statuses"></datalist>
+
+<script>
+let autosaveTimer = null;
+let lastKnownDate = null;
+let statusProtectedUntil = 0;
+const PHOTO_SIZES = { small: {thumb:60, report:70}, medium: {thumb:90, report:110}, large: {thumb:150, report:190} };
+let photoSize = 'medium';
+try{ photoSize = localStorage.getItem('postop-photo-size') || 'medium'; }catch(e){}
+function applyPhotoSize(){
+  document.documentElement.style.setProperty('--photo-thumb-size', PHOTO_SIZES[photoSize].thumb + 'px');
+}
+function setPhotoSize(size){
+  photoSize = size;
+  try{ localStorage.setItem('postop-photo-size', size); }catch(e){}
+  applyPhotoSize();
+  setStatus('Photo size set to ' + size, true);
+}
+applyPhotoSize();
+const FLAG_CATS = ["Stock on Hold","Contamination Event / Incident","Ingredients / Packaging Defects","Rework / Repacking / Re-labelling","General Escalation"];
+const PROBES = ["BT3","BT5","BT7","BT10","BT11","BT12","BT13","BT14","BT15","BT16","BT17","BT18","BT19","VAN1","VAN2","60ST","70ST"];
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function compressImage(file, maxDim, quality, callback){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const img = new Image();
+    img.onload = ()=>{
+      let w = img.width, h = img.height;
+      if(w > maxDim || h > maxDim){
+        if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function uid(){ return 'e'+Math.random().toString(36).slice(2,9); }
+
+// ---- Editable lists (units/products/locations/areas/actions) ----
+const DEFAULT_LISTS = {
+  units: ['Bags','Boxes','Bins','Pallets','Crates','Cartons'],
+  products: ['Zucchini Julienne 05mm','Carrot Nibbed','FSH BLK LEG TRIM 15 KG','FSH BLK FOD SOFF 12KG','X RAY BREAST TRIM 12KG'],
+  aldiProducts: ['Aldi Beef Meatloaf 1kg','FF Pork & Beef Cheesy Bratwurst 450g','FF Beef, Tomato & Mozzarella Meatballs 400g','ALDI Lamb Kofta 450g','ALDI Beef Kofta 450g','Aldi Specially Selected Beef Garlic & Parsley Sausages 1kg','ALDI Italian Pork & Beef Sausages 1kg','Aldi Specially Selected Pork & Pepper Gourmet Sausages 500g','Aldi Specially Selected Chicken, Fetta & Parsley Gourmet Sausages 500g'],
+  colesProducts: ['Coles Chicken Burgers, Zucchini & Cheddar Cheese 450g','Coles Beef and Thyme Burgers 500g','Coles Beef Smash Burger 450g','Coles Beef Stacker Burger 500g','Coles Classic Beef Burger 500g','Coles Finest Beef Brisket Burger 600g','Coles Finest Beef Thick & Juicy Burger 300g','Coles Finest Mediterranean Lamb Burger 300g','Graze Grass Fed Beef Burgers 500g','QuiteLike Thick & Juicy Burger 300g','Coles Beef and Pork Meatballs 560g','Coles Finest Meatballs with Australian Pinot & Roasted Garlic 450g','Graze Grass Fed Beef Meatballs 420g','QuiteLike Garlic & Thyme Meatballs 500g','Coles Beef Kebabs 450g','Coles Lamb Kebabs 450g','Coles Beef Rissoles Classic 440g'],
+  locations: ['Rear Chiller','Inwards Goods Chiller','Rear Cool Room','South Production','New Freezer'],
+  areas: ["Production Area","Inwards Goods","Stripping Room","Mincing Room","Label and Packaging Room","South Production","New Freezer"],
+  actions: ['Use First','QA Inspection/Approval','Discard','Return to Supplier','Hold for Review','Rework'],
+  observations: ['No issues observed','Floor needs cleaning','Water pooling on floor','Equipment needs sanitising','Waste bin needs emptying','Product residue on surfaces'],
+  probeComments: ['Unavailable','Not reading','Not working'],
+  probeActions: ['Replace Battery','Broken','Damaged'],
+  oxyUnitIds: ['Unit 1','Unit 2','Unit 3','Unit 4'],
+  probeIds: PROBES.slice(),
+  statuses: ['OK','Attention','Cleaning in progress','Needs to be fixed','Action Required'],
+};
+function loadLists(){
+  try{
+    const raw = localStorage.getItem('postop-lists-v2');
+    if(raw) return Object.assign({}, DEFAULT_LISTS, JSON.parse(raw));
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_LISTS));
+}
+let LISTS = loadLists();
+function saveLists(){
+  try{ localStorage.setItem('postop-lists-v2', JSON.stringify(LISTS)); }catch(e){}
+}
+function renderListConsumers(){
+  // Updates only the things OTHER than the textareas themselves (datalists + selects).
+  // Never touch a textarea's own .value here — doing so while the user is actively
+  // typing in it resets their cursor position and can undo what they just typed.
+  document.getElementById('dl_units').innerHTML = LISTS.units.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_products').innerHTML = [...LISTS.products, ...LISTS.aldiProducts, ...LISTS.colesProducts].map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_locations').innerHTML = LISTS.locations.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_areas').innerHTML = LISTS.areas.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_actions').innerHTML = LISTS.actions.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_observations').innerHTML = LISTS.observations.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_probecomments').innerHTML = LISTS.probeComments.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_probeactions').innerHTML = LISTS.probeActions.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_oxyunits').innerHTML = LISTS.oxyUnitIds.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_probeids').innerHTML = LISTS.probeIds.map(x=>`<option>${esc(x)}</option>`).join('');
+  document.getElementById('dl_statuses').innerHTML = LISTS.statuses.map(x=>`<option>${esc(x)}</option>`).join('');
+}
+function renderLists(){
+  document.getElementById('listUnits').value = LISTS.units.join('\n');
+  document.getElementById('listProducts').value = LISTS.products.join('\n');
+  document.getElementById('listAldiProducts').value = LISTS.aldiProducts.join('\n');
+  document.getElementById('listColesProducts').value = LISTS.colesProducts.join('\n');
+  document.getElementById('listLocations').value = LISTS.locations.join('\n');
+  document.getElementById('listAreas').value = LISTS.areas.join('\n');
+  document.getElementById('listActions').value = LISTS.actions.join('\n');
+  document.getElementById('listObservations').value = LISTS.observations.join('\n');
+  document.getElementById('listProbeComments').value = LISTS.probeComments.join('\n');
+  document.getElementById('listProbeActions').value = LISTS.probeActions.join('\n');
+  document.getElementById('listOxyUnits').value = LISTS.oxyUnitIds.join('\n');
+  document.getElementById('listProbeIds').value = LISTS.probeIds.join('\n');
+  document.getElementById('listStatuses').value = LISTS.statuses.join('\n');
+  renderListConsumers();
+}
+['listUnits','listProducts','listAldiProducts','listColesProducts','listLocations','listAreas','listActions','listObservations','listProbeComments','listProbeActions','listOxyUnits','listProbeIds','listStatuses'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    const map = {listUnits:'units', listProducts:'products', listAldiProducts:'aldiProducts', listColesProducts:'colesProducts', listLocations:'locations', listAreas:'areas', listActions:'actions', listObservations:'observations', listProbeComments:'probeComments', listProbeActions:'probeActions', listOxyUnits:'oxyUnitIds', listProbeIds:'probeIds', listStatuses:'statuses'};
+    LISTS[map[id]] = document.getElementById(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+    saveLists();
+    renderListConsumers();
+    autoSaveDraft();
+  });
+});
+renderLists();
+document.getElementById('photoSizeSelect').value = photoSize;
+document.getElementById('photoSizeSelect').addEventListener('change', e=>setPhotoSize(e.target.value));
+
+// ---- Custom vertical dropdown (tap to open, tap an option to select) ----
+const DATALIST_TO_LISTKEY = {
+  dl_units: 'units', dl_products: 'products', dl_locations: 'locations',
+  dl_areas: 'areas', dl_actions: 'actions', dl_observations: 'observations',
+  dl_probecomments: 'probeComments', dl_probeactions: 'probeActions',
+  dl_oxyunits: 'oxyUnitIds', dl_probeids: 'probeIds', dl_statuses: 'statuses',
+};
+function closeAllCombos(except){
+  document.querySelectorAll('.combo-panel.open').forEach(p=>{ if(p !== except) p.classList.remove('open'); });
+}
+function initCombos(root){
+  root.querySelectorAll('.combo-wrap').forEach(wrap=>{
+    if(wrap.dataset.comboInit) return;
+    wrap.dataset.comboInit = '1';
+    const input = wrap.querySelector('.combo-input');
+    const panel = wrap.querySelector('.combo-panel');
+    const listKey = DATALIST_TO_LISTKEY[input.dataset.list];
+
+    function openPanel(filterAsTyped){
+      const items = listKey === 'products'
+        ? [...LISTS.products, ...LISTS.aldiProducts, ...LISTS.colesProducts]
+        : (LISTS[listKey] || []);
+      const query = filterAsTyped ? input.value.trim().toLowerCase() : '';
+      const filtered = items.filter(i=>!query || i.toLowerCase().includes(query));
+      panel.innerHTML = '';
+      if(filtered.length === 0){
+        panel.innerHTML = '<div class="combo-empty">No matches — just type your own</div>';
+      } else {
+        filtered.forEach(i=>{
+          const opt = document.createElement('button');
+          opt.type = 'button';
+          opt.className = 'combo-option';
+          opt.textContent = i;
+          opt.addEventListener('click', ()=>{
+            input.value = i;
+            panel.classList.remove('open');
+            input.dataset.suppressOpen = '1';
+            input.dispatchEvent(new Event('input', {bubbles:true}));
+            input.dispatchEvent(new Event('change', {bubbles:true}));
+          });
+          panel.appendChild(opt);
+        });
+      }
+      closeAllCombos(panel);
+      panel.classList.add('open');
+    }
+    input.addEventListener('focus', ()=>openPanel(false));
+    input.addEventListener('click', ()=>openPanel(false));
+    input.addEventListener('input', ()=>{
+      if(input.dataset.suppressOpen){ delete input.dataset.suppressOpen; return; }
+      openPanel(true);
+    });
+    // No 'blur' auto-close here on purpose — closing on blur can race against the
+    // tap on an option and close the panel before the tap registers. Closing is
+    // handled entirely by tapping an option or tapping outside (below).
+  });
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.combo-wrap')) closeAllCombos();
+});
+
+// ---- Day pills ----
+let currentDay = 'Friday';
+const daypills = document.getElementById('daypills');
+DAYS.forEach(d=>{
+  const b = document.createElement('div');
+  b.className = 'daypill' + (d===currentDay ? ' active' : '');
+  b.textContent = d.slice(0,3);
+  b.addEventListener('click', ()=>{
+    currentDay = d;
+    document.querySelectorAll('.daypill').forEach(p=>p.classList.remove('active'));
+    b.classList.add('active');
+    autoSaveDraft();
+  });
+  daypills.appendChild(b);
+});
+
+// ---- Summary Flags ----
+const flagsBody = document.getElementById('flagsBody');
+FLAG_CATS.forEach((cat,i)=>{
+  const row = document.createElement('div');
+  row.className = 'flagrow';
+  row.innerHTML = `<div class="fname">${esc(cat)}</div>
+    <select id="flag_${i}"><option>None</option><option>Yes</option></select>
+    <input id="flagnote_${i}" placeholder="Details if Yes">`;
+  flagsBody.appendChild(row);
+});
+
+// ---- Generic entry-list helper ----
+function makeEntryList(containerId, fieldsDef, opts){
+  opts = opts || {};
+  function render(entries){
+    const c = document.getElementById(containerId);
+    c.innerHTML = '';
+    entries.forEach(entry=>c.appendChild(buildEntry(entry)));
+  }
+  function buildEntry(entry){
+    const div = document.createElement('div');
+    div.className = 'entry' + (opts.compact ? ' compact' : '');
+    div.dataset.id = entry.id;
+    let fieldsHtml = '';
+    fieldsDef.forEach(f=>{
+      const val = esc(entry[f.key] || '');
+      let inputHtml;
+      if(f.type==='number'){
+        inputHtml = `<input type="number" data-key="${f.key}" value="${val}">`;
+      } else if(f.type==='date'){
+        inputHtml = `<input type="date" data-key="${f.key}" value="${val}">`;
+      } else if(f.type==='datalist'){
+        inputHtml = `<div class="combo-wrap"><input class="combo-input" data-list="${f.list}" data-key="${f.key}" value="${val}" autocomplete="off"><div class="combo-panel"></div></div>`;
+      } else if(f.type==='photo'){
+        const hasPhoto = !!entry[f.key];
+        const include = entry[f.key+'Include'] !== false;
+        fieldsHtml += `<div class="field full">
+          <label>${esc(f.label)} (optional)</label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <input type="file" accept="image/*" class="photo-input" data-photokey="${f.key}" style="display:none;">
+            <button type="button" class="photo-btn" data-photokey="${f.key}" style="padding:8px 12px;border:1px dashed #b7c0c7;border-radius:6px;background:#fff;color:var(--steel);font-size:.85rem;cursor:pointer;">+ Add photo</button>
+            <img class="photo-preview" data-photokey="${f.key}" src="${entry[f.key]||''}" style="display:${hasPhoto?'block':'none'};border-radius:6px;border:1px solid var(--line);object-fit:cover;">
+            <button type="button" class="photo-remove" data-photokey="${f.key}" style="display:${hasPhoto?'inline-block':'none'};background:none;border:none;color:var(--bad);cursor:pointer;font-size:.82rem;">✕ Remove photo</button>
+            <label class="photo-include-wrap" data-photokey="${f.key}" style="display:${hasPhoto?'flex':'none'};align-items:center;gap:4px;font-size:.78rem;color:var(--steel);">
+              <input type="checkbox" class="photo-include" data-photokey="${f.key}"${include?' checked':''}> Include in report
+            </label>
+          </div>
+        </div>`;
+        return;
+      } else {
+        inputHtml = `<input data-key="${f.key}" value="${val}">`;
+      }
+      fieldsHtml += `<div class="field${f.full?' full':''}"><label>${esc(f.label)}</label>${inputHtml}</div>`;
+    });
+    div.innerHTML = `<div class="entry-top"><button class="rm" title="Remove">✕ Remove</button></div><div class="entry-fields">${fieldsHtml}</div>`;
+    div.querySelector('.rm').addEventListener('click', ()=>{ div.remove(); autoSaveDraft(); });
+    div.querySelectorAll('[data-key]').forEach(inp=>{
+      inp.addEventListener('input', ()=>autoSaveDraft());
+      inp.addEventListener('change', ()=>autoSaveDraft());
+    });
+    initCombos(div);
+    initPhotoFields(div);
+    return div;
+  }
+  function add(prefill){
+    const entry = Object.assign({id: uid()}, prefill||{});
+    document.getElementById(containerId).appendChild(buildEntry(entry));
+    autoSaveDraft();
+  }
+  function collect(){
+    return Array.from(document.getElementById(containerId).querySelectorAll('.entry')).map(div=>{
+      const o = {};
+      fieldsDef.forEach(f=>{
+        if(f.type==='photo'){
+          const img = div.querySelector(`.photo-preview[data-photokey="${f.key}"]`);
+          const chk = div.querySelector(`.photo-include[data-photokey="${f.key}"]`);
+          o[f.key] = img && img.src.startsWith('data:') ? img.src : '';
+          o[f.key+'Include'] = chk ? chk.checked : true;
+        } else {
+          const el = div.querySelector(`[data-key="${f.key}"]`);
+          o[f.key] = el ? el.value : '';
+        }
+      });
+      return o;
+    }).filter(o=>Object.keys(o).some(k=>!k.endsWith('Include') && o[k]));
+  }
+  return { render, add, collect };
+}
+function initPhotoFields(root){
+  root.querySelectorAll('.photo-btn').forEach(btn=>{
+    if(btn.dataset.photoInit) return;
+    btn.dataset.photoInit = '1';
+    const key = btn.dataset.photokey;
+    const wrap = btn.parentElement;
+    const input = wrap.querySelector(`.photo-input[data-photokey="${key}"]`);
+    const preview = wrap.querySelector(`.photo-preview[data-photokey="${key}"]`);
+    const removeBtn = wrap.querySelector(`.photo-remove[data-photokey="${key}"]`);
+    const includeWrap = wrap.querySelector(`.photo-include-wrap[data-photokey="${key}"]`);
+    btn.addEventListener('click', ()=>input.click());
+    input.addEventListener('change', ()=>{
+      const file = input.files[0];
+      if(!file) return;
+      compressImage(file, 700, 0.6, dataUrl=>{
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        removeBtn.style.display = 'inline-block';
+        includeWrap.style.display = 'flex';
+        autoSaveDraft();
+      });
+    });
+    removeBtn.addEventListener('click', ()=>{
+      preview.src = '';
+      preview.style.display = 'none';
+      removeBtn.style.display = 'none';
+      includeWrap.style.display = 'none';
+      input.value = '';
+      autoSaveDraft();
+    });
+    wrap.querySelector(`.photo-include[data-photokey="${key}"]`).addEventListener('change', autoSaveDraft);
+  });
+}
+
+const obsFields = [
+  {key:'area', label:'Area', type:'datalist', list:'dl_areas', full:true},
+  {key:'note', label:'Observation', type:'text', full:true},
+  {key:'status', label:'Status', type:'select-status'},
+];
+// Observations use a status <select> not unit — special-case build
+const obsList = {
+  render(entries){
+    const c = document.getElementById('obsList'); c.innerHTML='';
+    entries.forEach(e=>c.appendChild(build(e)));
+  },
+  add(prefill){
+    document.getElementById('obsList').appendChild(build(Object.assign({id:uid(), status:'OK'}, prefill||{})));
+    autoSaveDraft();
+  },
+  collect(){
+    return Array.from(document.getElementById('obsList').querySelectorAll('.entry')).map(div=>({
+      area: div.querySelector('[data-key="area"]').value,
+      note: div.querySelector('[data-key="note"]').value,
+      status: div.querySelector('[data-key="status"]').value,
+      photo: div.querySelector('.photo-preview').src.startsWith('data:') ? div.querySelector('.photo-preview').src : '',
+      photoInclude: div.querySelector('.photo-include').checked,
+    })).filter(o=>o.area || o.note || o.photo);
+  }
+};
+function build(entry){
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML = `<div class="entry-top"><button class="rm">✕ Remove</button></div>
+    <div class="entry-fields">
+      <div class="field full"><label>Area</label><div class="combo-wrap"><input class="combo-input" data-list="dl_areas" data-key="area" value="${esc(entry.area||'')}" autocomplete="off"><div class="combo-panel"></div></div></div>
+      <div class="field full">
+        <label>Observation</label>
+        <div style="display:flex;gap:6px;">
+          <div class="combo-wrap" style="flex:1;"><input class="combo-input" data-list="dl_observations" data-key="note" value="${esc(entry.note||'')}" autocomplete="off"><div class="combo-panel"></div></div>
+          <button type="button" class="save-finding" title="Save this as a reusable finding" style="flex:0 0 auto;padding:0 12px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--steel);font-size:.8rem;">+ Save</button>
+        </div>
+      </div>
+      <div class="field"><label>Status</label><div class="combo-wrap"><input class="combo-input" data-list="dl_statuses" data-key="status" value="${esc(entry.status||'OK')}" autocomplete="off"><div class="combo-panel"></div></div></div>
+      <div class="field full">
+        <label>Photo (optional)</label>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <input type="file" accept="image/*" class="photo-input" style="display:none;">
+          <button type="button" class="photo-btn" style="padding:8px 12px;border:1px dashed #b7c0c7;border-radius:6px;background:#fff;color:var(--steel);font-size:.85rem;cursor:pointer;">+ Add photo</button>
+          <img class="photo-preview" src="${entry.photo||''}" style="display:${entry.photo?'block':'none'};border-radius:6px;border:1px solid var(--line);object-fit:cover;">
+          <button type="button" class="photo-remove" style="display:${entry.photo?'inline-block':'none'};background:none;border:none;color:var(--bad);cursor:pointer;font-size:.82rem;">✕ Remove photo</button>
+          <label class="photo-include-wrap" style="display:${entry.photo?'flex':'none'};align-items:center;gap:4px;font-size:.78rem;color:var(--steel);">
+            <input type="checkbox" class="photo-include"${entry.photoInclude!==false?' checked':''}> Include in report
+          </label>
+        </div>
+      </div>
+    </div>`;
+  div.querySelector('.rm').addEventListener('click', ()=>{ div.remove(); autoSaveDraft(); });
+  div.querySelector('.save-finding').addEventListener('click', ()=>{
+    const noteInput = div.querySelector('[data-key="note"]');
+    const val = noteInput.value.trim();
+    if(!val){ setStatus('Type an observation first, then tap Save', true); return; }
+    if(!LISTS.observations.includes(val)) LISTS.observations.push(val);
+    saveLists();
+    renderListConsumers();
+    document.getElementById('listObservations').value = LISTS.observations.join('\n');
+    setStatus('Saved "' + val + '" to your findings list', true);
+  });
+  const photoBtn = div.querySelector('.photo-btn');
+  const photoInput = div.querySelector('.photo-input');
+  const photoPreview = div.querySelector('.photo-preview');
+  const photoRemove = div.querySelector('.photo-remove');
+  const photoIncludeWrap = div.querySelector('.photo-include-wrap');
+  photoBtn.addEventListener('click', ()=>photoInput.click());
+  photoInput.addEventListener('change', ()=>{
+    const file = photoInput.files[0];
+    if(!file) return;
+    compressImage(file, 700, 0.6, dataUrl=>{
+      photoPreview.src = dataUrl;
+      photoPreview.style.display = 'block';
+      photoRemove.style.display = 'inline-block';
+      photoIncludeWrap.style.display = 'flex';
+      autoSaveDraft();
+    });
+  });
+  photoRemove.addEventListener('click', ()=>{
+    photoPreview.src = '';
+    photoPreview.style.display = 'none';
+    photoRemove.style.display = 'none';
+    photoIncludeWrap.style.display = 'none';
+    photoInput.value = '';
+    autoSaveDraft();
+  });
+  div.querySelector('.photo-include').addEventListener('change', autoSaveDraft);
+  div.querySelectorAll('[data-key]').forEach(inp=>{
+    inp.addEventListener('input', autoSaveDraft);
+    inp.addEventListener('change', autoSaveDraft);
+  });
+  initCombos(div);
+  return div;
+}
+function addObs(prefill){ obsList.add(prefill); }
+
+const carryList = makeEntryList('carryList', [
+  {key:'qty', label:'Qty', type:'number'},
+  {key:'unit', label:'Unit', type:'datalist', list:'dl_units'},
+  {key:'product', label:'Product Description', type:'datalist', list:'dl_products', full:true},
+  {key:'prodDate', label:'Production Date', type:'date'},
+  {key:'bbDate', label:'BB Date', type:'date'},
+  {key:'photo', label:'Photo', type:'photo'},
+]);
+function addCarry(){ carryList.add(); }
+
+const fifoList = makeEntryList('fifoList', [
+  {key:'qty', label:'Qty', type:'number'},
+  {key:'unit', label:'Unit', type:'datalist', list:'dl_units'},
+  {key:'product', label:'Product Detail', type:'datalist', list:'dl_products', full:true},
+  {key:'pallet', label:'Pallet #', type:'text'},
+  {key:'bbDate', label:'BB/Use-By Date', type:'date'},
+  {key:'location', label:'Location', type:'datalist', list:'dl_locations'},
+  {key:'action', label:'Action', type:'datalist', list:'dl_actions'},
+  {key:'photo', label:'Photo', type:'photo'},
+]);
+function addFifo(){ fifoList.add(); }
+
+const qaholdList = makeEntryList('qaholdList', [
+  {key:'qty', label:'Qty', type:'number'},
+  {key:'unit', label:'Unit', type:'datalist', list:'dl_units'},
+  {key:'product', label:'Product Detail', type:'datalist', list:'dl_products', full:true},
+  {key:'supplier', label:'Supplier', type:'text'},
+  {key:'pallet', label:'Pallet #', type:'text'},
+  {key:'bbDate', label:'BB/Use-By Date', type:'date'},
+  {key:'action', label:'Action', type:'datalist', list:'dl_actions'},
+  {key:'photo', label:'Photo', type:'photo'},
+]);
+function addQahold(){ qaholdList.add(); }
+
+const onQaHoldList = makeEntryList('onQaHoldList', [
+  {key:'qty', label:'Qty', type:'number'},
+  {key:'unit', label:'Unit', type:'datalist', list:'dl_units'},
+  {key:'description', label:'Description', type:'datalist', list:'dl_products', full:true},
+  {key:'supplier', label:'Supplier', type:'text'},
+  {key:'pallet', label:'Pallet #', type:'text'},
+  {key:'bbDate', label:'BB/Use-By Date', type:'date'},
+  {key:'location', label:'Location', type:'datalist', list:'dl_locations'},
+  {key:'action', label:'Action', type:'datalist', list:'dl_actions'},
+  {key:'photo', label:'Photo', type:'photo'},
+]);
+function addOnQaHold(){ onQaHoldList.add(); }
+
+const oxybabyList = makeEntryList('oxybabyList', [
+  {key:'unitId', label:'Unit ID', type:'datalist', list:'dl_oxyunits'},
+  {key:'reading', label:'Reading', type:'text'},
+  {key:'comment', label:'Comments', type:'datalist', list:'dl_probecomments'},
+  {key:'action', label:'Action', type:'datalist', list:'dl_probeactions'},
+  {key:'photo', label:'Photo', type:'photo'},
+], {compact:true});
+function addOxybaby(){ oxybabyList.add(); }
+
+const calloutList = makeEntryList('calloutList', [
+  {key:'item', label:'Item / Equipment', type:'text', full:true},
+  {key:'issue', label:'Issue', type:'text', full:true},
+  {key:'action', label:'Action Required', type:'text', full:true},
+  {key:'photo', label:'Photo', type:'photo'},
+]);
+function addCallout(){ calloutList.add(); }
+
+// ---- Probe Calibration (fixed rows) ----
+const probeList = makeEntryList('probeBody', [
+  {key:'id', label:'Probe ID', type:'datalist', list:'dl_probeids'},
+  {key:'reading', label:'Reading (°C)', type:'text'},
+  {key:'comment', label:'Comments', type:'datalist', list:'dl_probecomments'},
+  {key:'action', label:'Action', type:'datalist', list:'dl_probeactions'},
+  {key:'photo', label:'Photo', type:'photo'},
+], {compact:true});
+function addProbe(prefill){ probeList.add(prefill); }
+
+// ---- Seed default rows (skip entirely if we're about to load a saved draft — avoids building everything twice) ----
+(function(){
+  const dateField = document.getElementById('f_date');
+  if(!dateField.value) dateField.value = new Date().toISOString().slice(0,10);
+  lastKnownDate = dateField.value;
+  let existingDraft = null;
+  try{ existingDraft = localStorage.getItem('postop-draft-v2:' + dateField.value); }catch(e){}
+
+  if(existingDraft){
+    try{
+      applyState(JSON.parse(existingDraft));
+      setStatus("Restored today's saved data");
+    }catch(e){
+      // fall back to a fresh, empty form if the saved draft is somehow corrupt
+      LISTS.areas.forEach(a=>addObs({area:a}));
+      PROBES.forEach(id=>addProbe({id}));
+      addCarry(); addFifo(); addQahold(); addOnQaHold(); addOxybaby(); addCallout();
+    }
+  } else {
+    LISTS.areas.forEach(a=>addObs({area:a}));
+    PROBES.forEach(id=>addProbe({id}));
+    addCarry(); addFifo(); addQahold(); addOnQaHold(); addOxybaby(); addCallout();
+  }
+})();
+
+// ---- Report generation ----
+function included(section){
+  const cb = document.querySelector(`.include-toggle input[data-section="${section}"]`);
+  return cb ? cb.checked : true;
+}
+function tbl(headers, rows, widths, nowrapCols, rawCols){
+  const nw = nowrapCols || [];
+  const raw = rawCols || [];
+  const cssW = w => /^\d+$/.test(w) ? w+'px' : w; // bare numbers are px in the width attribute, but need a unit in CSS
+  let h = `<table width="100%" cellspacing="0" cellpadding="4" style="width:100%;border-collapse:collapse;margin:3px 0 12px;font-family:Calibri,Arial,sans-serif;font-size:13px;border:1px solid #999;">`;
+  h += `<tr>${headers.map((x,i)=>`<th${nw.includes(i)?' nowrap="nowrap"':''}${widths&&widths[i]?` width="${widths[i]}"`:''} style="border-bottom:2px solid #999;border-right:1px solid #ccc;background:#eef0f1;padding:4px 6px;text-align:left;color:#000;font-weight:bold;font-size:12.5px;${nw.includes(i)?'white-space:nowrap;':''}${widths&&widths[i]?`width:${cssW(widths[i])};`:''}">${esc(x)}</th>`).join('')}</tr>`;
+  rows.forEach((r,ri)=>{
+    const b = ri===rows.length-1 ? '' : 'border-bottom:1px solid #ddd;';
+    h += `<tr>${r.map((x,ci)=>`<td${nw.includes(ci)?' nowrap="nowrap"':''} style="${b}${ci===r.length-1?'':'border-right:1px solid #e6e6e6;'}padding:4px 6px;color:#000;font-size:13px;${nw.includes(ci)?'white-space:nowrap;':''}">${raw.includes(ci) ? (x||'') : esc(x)}</td>`).join('')}</tr>`;
+  });
+  h += `</table>`;
+  return h;
+}
+// Vertical "card" layout: each row becomes label:value lines stacked in a bordered
+// block, instead of table columns. No columns means no column-width to fight with
+// email clients over — this is immune to the Gmail paste-narrowing problem entirely.
+function photoCell(r){
+  const px = PHOTO_SIZES[photoSize].report;
+  return (r.photo && r.photoInclude) ? `<img src="${r.photo}" style="max-width:${px}px;max-height:${px}px;border-radius:4px;display:block;">` : '';
+}
+function buildReport(){
+  const score = document.getElementById('f_score').value || '';
+  let html = `<div style="font-family:Calibri,Arial,sans-serif;color:#000;max-width:560px;">`;
+  html += `<h1 style="font-size:19px;margin:0 0 10px;">POST-OP REPORT</h1>`;
+  html += `<div style="font-size:16px;font-weight:bold;margin-bottom:16px;">Post-Op Score : ${esc(score)}%</div>`;
+
+  let t = ['POST-OP REPORT','', `POST-OP SCORE: ${score}%`, ''];
+
+  if(included('flags')){
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:0 0 8px;">Summary Flags</h2>`;
+    const rows = FLAG_CATS.map((cat,i)=>{
+      const val = document.getElementById('flag_'+i).value;
+      const note = document.getElementById('flagnote_'+i).value;
+      return [cat, val + (val==='Yes' && note ? ' — '+note : '')];
+    });
+    html += tbl(['Category','Status'], rows, ['55%','45%']);
+    t.push('SUMMARY FLAGS','-'.repeat(40));
+    rows.forEach(r=>t.push(`${r[0]}: ${r[1]}`));
+    t.push('');
+  }
+
+  if(included('obs')){
+    const rows = obsList.collect();
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Observations</h2>`;
+    const hasPhotos = rows.some(r=>r.photo && r.photoInclude);
+    if(hasPhotos){
+      const imgCell = r => photoCell(r);
+      html += tbl(['Area','Observation','Status','Photo'], rows.map(r=>[r.area,r.note,r.status,imgCell(r)]), ['18%','40%','16%','26%'], [], [3]);
+    } else {
+      html += tbl(['Area','Observation','Status'], rows.map(r=>[r.area,r.note,r.status]), ['22%','56%','22%']);
+    }
+    t.push('OBSERVATIONS','-'.repeat(40));
+    rows.forEach(r=>t.push(`${r.area||'[Area]'}: ${r.note||'—'} [${r.status}]${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    t.push('');
+  }
+
+  if(included('carry')){
+    const rows = carryList.collect();
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Carry Over</h2>`;
+    if(rows.some(r=>r.photo && r.photoInclude)){
+      html += tbl(['Qty','Unit','Product Description','Production Date','BB Date','Photo'], rows.map(r=>[r.qty,r.unit,r.product,r.prodDate,r.bbDate,photoCell(r)]), ['7%','10%','36%','15%','15%'], [], [5]);
+    } else {
+      html += tbl(['Qty','Unit','Product Description','Production Date','BB Date'], rows.map(r=>[r.qty,r.unit,r.product,r.prodDate,r.bbDate]), ['8%','12%','44%','18%','18%']);
+    }
+    t.push('CARRY OVER','-'.repeat(40));
+    rows.forEach(r=>t.push(`Qty ${r.qty}${r.unit?' '+r.unit:''} — ${r.product||'[Product]'} | Prod: ${r.prodDate||'—'} | BB: ${r.bbDate||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    t.push('');
+  }
+
+  if(included('fifo')){
+    const rows = fifoList.collect();
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Product Control (FIFO) – Near BB / Use-By Date</h2>`;
+    if(rows.some(r=>r.photo && r.photoInclude)){
+      html += tbl(['Qty','Unit','Product Detail','Pallet #','BB/Use-By','Location','Action','Photo'], rows.map(r=>[r.qty,r.unit,r.product,r.pallet,r.bbDate,r.location,r.action,photoCell(r)]), ['6%','8%','20%','8%','11%','13%','15%'], [], [7]);
+    } else {
+      html += tbl(['Qty','Unit','Product Detail','Pallet #','BB/Use-By','Location','Action'], rows.map(r=>[r.qty,r.unit,r.product,r.pallet,r.bbDate,r.location,r.action]), ['7%','9%','27%','10%','13%','16%','18%']);
+    }
+    t.push('PRODUCT CONTROL (FIFO)','-'.repeat(40));
+    rows.forEach(r=>t.push(`Qty ${r.qty}${r.unit?' '+r.unit:''} — ${r.product||'[Product]'} | Pallet ${r.pallet||'—'} | ${r.bbDate||'—'} | ${r.location||'—'} | ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    t.push('');
+  }
+
+  if(included('qahold')){
+    const rows = qaholdList.collect();
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">QA Hold Shelf</h2>`;
+    if(rows.some(r=>r.photo && r.photoInclude)){
+      html += tbl(['Qty','Unit','Product Detail','Supplier','Pallet #','BB/Use-By','Action','Photo'], rows.map(r=>[r.qty,r.unit,r.product,r.supplier,r.pallet,r.bbDate,r.action,photoCell(r)]), ['6%','7%','19%','11%','9%','11%','17%'], [], [7]);
+    } else {
+      html += tbl(['Qty','Unit','Product Detail','Supplier','Pallet #','BB/Use-By','Action'], rows.map(r=>[r.qty,r.unit,r.product,r.supplier,r.pallet,r.bbDate,r.action]), ['7%','8%','25%','14%','11%','14%','21%']);
+    }
+    t.push('QA HOLD SHELF','-'.repeat(40));
+    if(rows.length) rows.forEach(r=>t.push(`${r.qty||'—'}${r.unit?' '+r.unit:''} — ${r.product||'[Product]'} | Supplier: ${r.supplier||'—'} | Pallet ${r.pallet||'—'} | ${r.bbDate||'—'} | Action: ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    else t.push('None');
+    t.push('');
+  }
+
+  if(included('onqahold')){
+    const rows = onQaHoldList.collect();
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">ON QA HOLD: For Inspection and Approval</h2>`;
+    if(rows.some(r=>r.photo && r.photoInclude)){
+      html += tbl(['Qty','Unit','Description','Supplier','Pallet #','BB/Use-By','Location','Action','Photo'], rows.map(r=>[r.qty,r.unit,r.description,r.supplier,r.pallet,r.bbDate,r.location,r.action,photoCell(r)]), ['5%','6%','17%','9%','8%','9%','10%','14%'], [], [8]);
+    } else {
+      html += tbl(['Qty','Unit','Description','Supplier','Pallet #','BB/Use-By','Location','Action'], rows.map(r=>[r.qty,r.unit,r.description,r.supplier,r.pallet,r.bbDate,r.location,r.action]), ['6%','7%','22%','12%','10%','12%','13%','18%']);
+    }
+    t.push('ON QA HOLD: FOR INSPECTION AND APPROVAL','-'.repeat(40));
+    if(rows.length) rows.forEach(r=>t.push(`${r.qty||'—'}${r.unit?' '+r.unit:''} — ${r.description||'[Description]'} | Supplier: ${r.supplier||'—'} | Pallet ${r.pallet||'—'} | ${r.bbDate||'—'} | ${r.location||'—'} | Action: ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    else t.push('None');
+    t.push('');
+  }
+
+  if(included('probe')){
+    const rows = probeList.collect().filter(r => r.reading || r.comment || r.action || r.photo);
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Probe Calibration</h2>`;
+    if(rows.some(r=>r.photo && r.photoInclude)){
+      html += tbl(['Probe ID','Reading','Comments','Action','Photo'], rows.length ? rows.map(r=>[r.id,r.reading,r.comment,r.action,photoCell(r)]) : [['None','','','','']], ['12%','11%','32%','24%'], [], [4]);
+    } else {
+      html += tbl(['Probe ID','Reading','Comments','Action'], rows.length ? rows.map(r=>[r.id,r.reading,r.comment,r.action]) : [['None','','','']], ['16%','14%','40%','30%']);
+    }
+    t.push('PROBE CALIBRATION','-'.repeat(40));
+    if(rows.length) rows.forEach(r=>t.push(`${r.id||'—'}: ${r.reading||'—'} ${r.comment?'| '+r.comment:''}${r.action?' | Action: '+r.action:''}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    else t.push('None');
+    t.push('');
+  }
+
+  if(included('oxybaby')){
+    const rows = oxybabyList.collect();
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Oxybaby Calibration</h2>`;
+    if(rows.some(r=>r.photo && r.photoInclude)){
+      html += tbl(['Unit ID','Reading','Comments','Action','Photo'], rows.map(r=>[r.unitId,r.reading,r.comment,r.action,photoCell(r)]), ['12%','11%','32%','24%'], [], [4]);
+    } else {
+      html += tbl(['Unit ID','Reading','Comments','Action'], rows.map(r=>[r.unitId,r.reading,r.comment,r.action]), ['16%','14%','40%','30%']);
+    }
+    t.push('OXYBABY CALIBRATION','-'.repeat(40));
+    if(rows.length) rows.forEach(r=>t.push(`${r.unitId||'—'}: ${r.reading||'—'} ${r.comment?'| '+r.comment:''}${r.action?' | Action: '+r.action:''}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    else t.push('None');
+    t.push('');
+  }
+
+  if(included('callouts')){
+    const rows = calloutList.collect();
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Callouts</h2>`;
+    if(rows.some(r=>r.photo && r.photoInclude)){
+      html += tbl(['Item / Equipment','Issue','Action Required','Photo'], rows.length ? rows.map(r=>[r.item,r.issue,r.action,photoCell(r)]) : [['None','','','']], ['17%','32%','28%'], [], [3]);
+    } else {
+      html += tbl(['Item / Equipment','Issue','Action Required'], rows.length ? rows.map(r=>[r.item,r.issue,r.action]) : [['None','','']], ['22%','42%','36%']);
+    }
+    t.push('CALLOUTS','-'.repeat(40));
+    if(rows.length) rows.forEach(r=>t.push(`${r.item||'[Item]'} — ${r.issue||'[Issue]'} — Action: ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
+    else t.push('None');
+  }
+
+  html += `<h2 style="font-size:16px;font-weight:bold;margin:26px 0 4px;">Sleeve Wastage</h2>`;
+  t.push('', 'SLEEVE WASTAGE');
+
+  html += `</div>`;
+  return { html, text: t.join('\n') };
+}
+function generate(){
+  const r = buildReport();
+  window.__reportHTML = r.html;
+  window.__reportText = r.text;
+  const out = document.getElementById('output');
+  out.innerHTML = r.html;
+  out.classList.add('show');
+  out.scrollIntoView({behavior:'smooth'});
+  setStatus('Report generated', true);
+}
+function copyOut(){
+  if(!window.__reportHTML) generate();
+  const htmlBlob = new Blob([window.__reportHTML], {type:'text/html'});
+  const textBlob = new Blob([window.__reportText], {type:'text/plain'});
+  if(navigator.clipboard && window.ClipboardItem){
+    navigator.clipboard.write([new ClipboardItem({'text/html':htmlBlob,'text/plain':textBlob})])
+      .then(()=>setStatus('Copied — paste directly into email body', true))
+      .catch(()=>navigator.clipboard.writeText(window.__reportText).then(()=>setStatus('Copied as plain text', true)));
+  } else {
+    navigator.clipboard.writeText(window.__reportText).then(()=>setStatus('Copied as plain text', true));
+  }
+}
+function setStatus(msg, priority){
+  const now = Date.now();
+  if(!priority && now < statusProtectedUntil) return; // don't clobber a recent action confirmation
+  if(priority) statusProtectedUntil = now + 2500;
+  document.getElementById('status').textContent = msg;
+}
+
+// ---- Save / load / autosave ----
+function collectState(){
+  return {
+    date: document.getElementById('f_date').value,
+    score: document.getElementById('f_score').value,
+    day: currentDay,
+    flags: FLAG_CATS.map((c,i)=>({v:document.getElementById('flag_'+i).value, n:document.getElementById('flagnote_'+i).value})),
+    obs: obsList.collect(),
+    carry: carryList.collect(),
+    fifo: fifoList.collect(),
+    qahold: qaholdList.collect(),
+    onqahold: onQaHoldList.collect(),
+    oxybaby: oxybabyList.collect(),
+    callouts: calloutList.collect(),
+    probes: probeList.collect(),
+    include: Array.from(document.querySelectorAll('.include-toggle input')).reduce((o,cb)=>{ o[cb.dataset.section]=cb.checked; return o; }, {}),
+  };
+}
+function applyState(s){
+  document.getElementById('f_date').value = s.date || '';
+  document.getElementById('f_score').value = s.score || '';
+  (s.flags||[]).forEach((f,i)=>{
+    const sel = document.getElementById('flag_'+i), note = document.getElementById('flagnote_'+i);
+    if(sel){ sel.value = f.v||'None'; note.value = f.n||''; }
+  });
+  obsList.render(s.obs && s.obs.length ? s.obs : LISTS.areas.map(a=>({area:a, status:'OK'})));
+  carryList.render(s.carry && s.carry.length ? s.carry : [{}]);
+  fifoList.render(s.fifo && s.fifo.length ? s.fifo : [{}]);
+  qaholdList.render(s.qahold && s.qahold.length ? s.qahold : [{}]);
+  onQaHoldList.render(s.onqahold && s.onqahold.length ? s.onqahold : [{}]);
+  oxybabyList.render(s.oxybaby && s.oxybaby.length ? s.oxybaby : [{}]);
+  calloutList.render(s.callouts && s.callouts.length ? s.callouts : [{}]);
+  probeList.render(s.probes && s.probes.length ? s.probes : PROBES.map(id=>({id})));
+  if(s.include){
+    document.querySelectorAll('.include-toggle input').forEach(cb=>{
+      const v = s.include[cb.dataset.section];
+      cb.checked = v===undefined ? true : v;
+    });
+  }
+  if(s.day){
+    currentDay = s.day;
+    document.querySelectorAll('.daypill').forEach(p=>p.classList.toggle('active', p.textContent===s.day.slice(0,3)));
+  }
+}
+function autoSaveDraft(){
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(()=>{
+    try{
+      const key = 'postop-draft-v2:' + (document.getElementById('f_date').value || 'undated');
+      localStorage.setItem(key, JSON.stringify(collectState()));
+      const now = new Date();
+      setStatus(`Auto-saved at ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
+    }catch(e){
+      setStatus('Autosave failed (private/incognito mode blocks local storage)');
+    }
+  }, 600);
+}
+function saveDraft(){
+  try{
+    const key = 'postop-draft-v2:' + (document.getElementById('f_date').value || 'undated');
+    localStorage.setItem(key, JSON.stringify(collectState()));
+    setStatus('Saved', true);
+  }catch(e){ setStatus('Save failed', true); }
+}
+function loadDraft(){
+  const date = prompt('Enter the date to load (YYYY-MM-DD):', document.getElementById('f_date').value || '');
+  if(!date) return;
+  try{
+    const raw = localStorage.getItem('postop-draft-v2:' + date);
+    if(!raw){ setStatus('No draft found for that date', true); return; }
+    applyState(JSON.parse(raw));
+    setStatus('Draft loaded for ' + date, true);
+  }catch(e){ setStatus('No draft found for that date', true); }
+}
+function resetFormToFresh(){
+  document.getElementById('f_score').value = '';
+  FLAG_CATS.forEach((c,i)=>{ document.getElementById('flag_'+i).value='None'; document.getElementById('flagnote_'+i).value=''; });
+  obsList.render(LISTS.areas.map(a=>({area:a, status:'OK'})));
+  carryList.render([{}]);
+  fifoList.render([{}]);
+  qaholdList.render([{}]);
+  onQaHoldList.render([{}]);
+  oxybabyList.render([{}]);
+  calloutList.render([{}]);
+  probeList.render(PROBES.map(id=>({id})));
+  document.querySelectorAll('.include-toggle input').forEach(cb=>cb.checked=true);
+  const out = document.getElementById('output');
+  out.classList.remove('show'); out.innerHTML='';
+  window.__reportHTML = null; window.__reportText = null;
+}
+function clearData(){
+  if(!confirm('Clear all entered data? This cannot be undone. Your dropdown lists are not affected.')) return;
+  resetFormToFresh();
+  autoSaveDraft();
+  setStatus('Data cleared', true);
+}
+
+// ---- Export / Import all saved data (drafts + dropdown lists) ----
+function exportData(){
+  try{
+    const bundle = { exportedAt: new Date().toISOString(), data: {} };
+    for(let i=0; i<localStorage.length; i++){
+      const key = localStorage.key(i);
+      if(key && key.startsWith('postop-')){
+        bundle.data[key] = localStorage.getItem(key);
+      }
+    }
+    const keyCount = Object.keys(bundle.data).length;
+    if(keyCount === 0){ setStatus('Nothing to export yet', true); return; }
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `postop-report-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setStatus(`Exported ${keyCount} saved item(s) — check your downloads`, true);
+  }catch(e){
+    setStatus('Export failed: ' + e.message, true);
+  }
+}
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const bundle = JSON.parse(reader.result);
+      const data = bundle.data || bundle; // tolerate a raw key/value dump too
+      const keys = Object.keys(data);
+      if(keys.length === 0){ setStatus('That file has no saved data in it', true); return; }
+      if(!confirm(`Import ${keys.length} saved item(s)? This will overwrite any drafts/lists with the same date or name already on this device.`)) return;
+      keys.forEach(k=>{
+        if(k.startsWith('postop-')) localStorage.setItem(k, data[k]);
+      });
+      LISTS = loadLists();
+      renderLists();
+      // reload today's draft (or whichever date is currently selected) so the screen reflects the import
+      const raw = localStorage.getItem('postop-draft-v2:' + document.getElementById('f_date').value);
+      if(raw) applyState(JSON.parse(raw));
+      setStatus(`Imported ${keys.length} saved item(s)`, true);
+    }catch(err){
+      setStatus('Import failed — that doesn\'t look like a valid backup file', true);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+// autosave hooks for top-level fields
+function handleDateFieldChange(){
+  const val = document.getElementById('f_date').value;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(val)) return; // wait for a complete date
+  if(val === lastKnownDate) return;
+  lastKnownDate = val;
+  let raw = null;
+  try{ raw = localStorage.getItem('postop-draft-v2:' + val); }catch(e){}
+  if(raw){
+    applyState(JSON.parse(raw));
+    setStatus('Loaded saved data for ' + val, true);
+  } else {
+    resetFormToFresh();
+    autoSaveDraft();
+    setStatus('New date — form cleared', true);
+  }
+}
+document.getElementById('f_date').addEventListener('input', handleDateFieldChange);
+document.getElementById('f_date').addEventListener('change', handleDateFieldChange);
+document.getElementById('f_date').addEventListener('blur', handleDateFieldChange);
+document.getElementById('f_score').addEventListener('input', autoSaveDraft);
+flagsBody.addEventListener('input', autoSaveDraft);
+flagsBody.addEventListener('change', autoSaveDraft);
+document.querySelectorAll('.include-toggle input').forEach(cb=>cb.addEventListener('change', autoSaveDraft));
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

@@ -141,13 +141,40 @@
     </div>
   </details>
 
+  <details class="section listedit" id="titlesSection">
+    <summary>✎ Edit section headings <span style="font-weight:400;font-size:.72rem;color:var(--steel);">(shown on screen and in the report)</span></summary>
+    <div class="section-body">
+      <label>Summary Flags</label>
+      <input type="text" id="titleFlags">
+      <label>Observations</label>
+      <input type="text" id="titleObs">
+      <label>Carry Over</label>
+      <input type="text" id="titleCarry">
+      <label>Product Control (FIFO)</label>
+      <input type="text" id="titleFifo">
+      <label>QA Hold Shelf</label>
+      <input type="text" id="titleQahold">
+      <label>ON QA HOLD: For Inspection and Approval</label>
+      <input type="text" id="titleOnqahold">
+      <label>Probe Calibration</label>
+      <input type="text" id="titleProbe">
+      <label>Oxybaby Calibration</label>
+      <input type="text" id="titleOxybaby">
+      <label>Callouts</label>
+      <input type="text" id="titleCallouts">
+      <label>Sleeve Wastage</label>
+      <input type="text" id="titleSleeve">
+      <div class="hint">Rename any heading — changes save automatically and update the on-screen section and the generated report.</div>
+    </div>
+  </details>
+
   <details class="section" open>
-    <summary>Summary Flags <span class="include-toggle"><input type="checkbox" data-section="flags" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="flags">Summary Flags</span> <span class="include-toggle"><input type="checkbox" data-section="flags" checked> include</span></summary>
     <div class="section-body" id="flagsBody"></div>
   </details>
 
   <details class="section">
-    <summary>Observations <span class="include-toggle"><input type="checkbox" data-section="obs" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="obs">Observations</span> <span class="include-toggle"><input type="checkbox" data-section="obs" checked> include</span></summary>
     <div class="section-body">
       <div id="obsList"></div>
       <button class="addbtn" onclick="addObs()">+ Add observation</button>
@@ -155,7 +182,7 @@
   </details>
 
   <details class="section">
-    <summary>Carry Over <span class="include-toggle"><input type="checkbox" data-section="carry" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="carry">Carry Over</span> <span class="include-toggle"><input type="checkbox" data-section="carry" checked> include</span></summary>
     <div class="section-body">
       <div id="carryList"></div>
       <button class="addbtn" onclick="addCarry()">+ Add item</button>
@@ -163,7 +190,7 @@
   </details>
 
   <details class="section">
-    <summary>Product Control (FIFO) <span class="include-toggle"><input type="checkbox" data-section="fifo" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="fifo">Product Control (FIFO)</span> <span class="include-toggle"><input type="checkbox" data-section="fifo" checked> include</span></summary>
     <div class="section-body">
       <div id="fifoList"></div>
       <button class="addbtn" onclick="addFifo()">+ Add item</button>
@@ -171,7 +198,7 @@
   </details>
 
   <details class="section">
-    <summary>QA Hold Shelf <span class="include-toggle"><input type="checkbox" data-section="qahold" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="qahold">QA Hold Shelf</span> <span class="include-toggle"><input type="checkbox" data-section="qahold" checked> include</span></summary>
     <div class="section-body">
       <div id="qaholdList"></div>
       <button class="addbtn" onclick="addQahold()">+ Add item</button>
@@ -179,7 +206,7 @@
   </details>
 
   <details class="section">
-    <summary>ON QA HOLD: For Inspection and Approval <span class="include-toggle"><input type="checkbox" data-section="onqahold" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="onqahold">ON QA HOLD: For Inspection and Approval</span> <span class="include-toggle"><input type="checkbox" data-section="onqahold" checked> include</span></summary>
     <div class="section-body">
       <div id="onQaHoldList"></div>
       <button class="addbtn" onclick="addOnQaHold()">+ Add item</button>
@@ -187,7 +214,7 @@
   </details>
 
   <details class="section" id="probeSection">
-    <summary>Probe Calibration <span class="include-toggle"><input type="checkbox" data-section="probe" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="probe">Probe Calibration</span> <span class="include-toggle"><input type="checkbox" data-section="probe" checked> include</span></summary>
     <div class="section-body">
       <div id="probeBody"></div>
       <button class="addbtn" onclick="addProbe()">+ Add probe</button>
@@ -195,7 +222,7 @@
   </details>
 
   <details class="section">
-    <summary>Oxybaby Calibration <span class="include-toggle"><input type="checkbox" data-section="oxybaby" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="oxybaby">Oxybaby Calibration</span> <span class="include-toggle"><input type="checkbox" data-section="oxybaby" checked> include</span></summary>
     <div class="section-body">
       <div id="oxybabyList"></div>
       <button class="addbtn" onclick="addOxybaby()">+ Add unit</button>
@@ -203,7 +230,7 @@
   </details>
 
   <details class="section">
-    <summary>Callouts <span class="include-toggle"><input type="checkbox" data-section="callouts" checked> include</span></summary>
+    <summary><span class="sec-title" data-key="callouts">Callouts</span> <span class="include-toggle"><input type="checkbox" data-section="callouts" checked> include</span></summary>
     <div class="section-body">
       <div id="calloutList"></div>
       <button class="addbtn" onclick="addCallout()">+ Add callout</button>
@@ -310,6 +337,29 @@ let LISTS = loadLists();
 function saveLists(){
   try{ localStorage.setItem('postop-lists-v2', JSON.stringify(LISTS)); }catch(e){}
 }
+const DEFAULT_TITLES = {
+  flags: 'Summary Flags',
+  obs: 'Observations',
+  carry: 'Carry Over',
+  fifo: 'Product Control (FIFO) – Near BB / Use-By Date',
+  qahold: 'QA Hold Shelf',
+  onqahold: 'ON QA HOLD: For Inspection and Approval',
+  probe: 'Probe Calibration',
+  oxybaby: 'Oxybaby Calibration',
+  callouts: 'Callouts',
+  sleeve: 'Sleeve Wastage',
+};
+function loadTitles(){
+  try{
+    const raw = localStorage.getItem('postop-titles-v1');
+    if(raw) return Object.assign({}, DEFAULT_TITLES, JSON.parse(raw));
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_TITLES));
+}
+let TITLES = loadTitles();
+function saveTitles(){
+  try{ localStorage.setItem('postop-titles-v1', JSON.stringify(TITLES)); }catch(e){}
+}
 function renderListConsumers(){
   // Updates only the things OTHER than the textareas themselves (datalists + selects).
   // Never touch a textarea's own .value here — doing so while the user is actively
@@ -354,6 +404,29 @@ function renderLists(){
 renderLists();
 document.getElementById('photoSizeSelect').value = photoSize;
 document.getElementById('photoSizeSelect').addEventListener('change', e=>setPhotoSize(e.target.value));
+
+function applyTitlesToDom(){
+  document.querySelectorAll('.sec-title[data-key]').forEach(el=>{
+    const key = el.dataset.key;
+    if(TITLES[key]) el.textContent = TITLES[key];
+  });
+}
+function renderTitles(){
+  const map = {titleFlags:'flags', titleObs:'obs', titleCarry:'carry', titleFifo:'fifo', titleQahold:'qahold', titleOnqahold:'onqahold', titleProbe:'probe', titleOxybaby:'oxybaby', titleCallouts:'callouts', titleSleeve:'sleeve'};
+  Object.keys(map).forEach(id=>{ document.getElementById(id).value = TITLES[map[id]]; });
+  applyTitlesToDom();
+}
+['titleFlags','titleObs','titleCarry','titleFifo','titleQahold','titleOnqahold','titleProbe','titleOxybaby','titleCallouts','titleSleeve'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    const map = {titleFlags:'flags', titleObs:'obs', titleCarry:'carry', titleFifo:'fifo', titleQahold:'qahold', titleOnqahold:'onqahold', titleProbe:'probe', titleOxybaby:'oxybaby', titleCallouts:'callouts', titleSleeve:'sleeve'};
+    const key = map[id];
+    const val = document.getElementById(id).value;
+    TITLES[key] = val.trim() ? val : DEFAULT_TITLES[key];
+    saveTitles();
+    applyTitlesToDom();
+  });
+});
+renderTitles();
 
 // ---- Custom vertical dropdown (tap to open, tap an option to select) ----
 const DATALIST_TO_LISTKEY = {
@@ -785,21 +858,21 @@ function buildReport(){
   let t = ['POST-OP REPORT','', `POST-OP SCORE: ${score}%`, ''];
 
   if(included('flags')){
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:0 0 8px;">Summary Flags</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:0 0 8px;">${esc(TITLES.flags)}</h2>`;
     const rows = FLAG_CATS.map((cat,i)=>{
       const val = document.getElementById('flag_'+i).value;
       const note = document.getElementById('flagnote_'+i).value;
       return [cat, val + (val==='Yes' && note ? ' — '+note : '')];
     });
     html += tbl(['Category','Status'], rows, ['55%','45%']);
-    t.push('SUMMARY FLAGS','-'.repeat(40));
+    t.push(TITLES.flags.toUpperCase(),'-'.repeat(40));
     rows.forEach(r=>t.push(`${r[0]}: ${r[1]}`));
     t.push('');
   }
 
   if(included('obs')){
     const rows = obsList.collect();
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Observations</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.obs)}</h2>`;
     const hasPhotos = rows.some(r=>r.photo && r.photoInclude);
     if(hasPhotos){
       const imgCell = r => photoCell(r);
@@ -807,46 +880,46 @@ function buildReport(){
     } else {
       html += tbl(['Area','Observation','Status'], rows.map(r=>[r.area,r.note,r.status]), ['22%','56%','22%']);
     }
-    t.push('OBSERVATIONS','-'.repeat(40));
+    t.push(TITLES.obs.toUpperCase(),'-'.repeat(40));
     rows.forEach(r=>t.push(`${r.area||'[Area]'}: ${r.note||'—'} [${r.status}]${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     t.push('');
   }
 
   if(included('carry')){
     const rows = carryList.collect();
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Carry Over</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.carry)}</h2>`;
     if(rows.some(r=>r.photo && r.photoInclude)){
       html += tbl(['Qty','Unit','Product Description','Production Date','BB Date','Photo'], rows.map(r=>[r.qty,r.unit,r.product,r.prodDate,r.bbDate,photoCell(r)]), ['7%','10%','36%','15%','15%'], [], [5]);
     } else {
       html += tbl(['Qty','Unit','Product Description','Production Date','BB Date'], rows.map(r=>[r.qty,r.unit,r.product,r.prodDate,r.bbDate]), ['8%','12%','44%','18%','18%']);
     }
-    t.push('CARRY OVER','-'.repeat(40));
+    t.push(TITLES.carry.toUpperCase(),'-'.repeat(40));
     rows.forEach(r=>t.push(`Qty ${r.qty}${r.unit?' '+r.unit:''} — ${r.product||'[Product]'} | Prod: ${r.prodDate||'—'} | BB: ${r.bbDate||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     t.push('');
   }
 
   if(included('fifo')){
     const rows = fifoList.collect();
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Product Control (FIFO) – Near BB / Use-By Date</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.fifo)}</h2>`;
     if(rows.some(r=>r.photo && r.photoInclude)){
       html += tbl(['Qty','Unit','Product Detail','Pallet #','BB/Use-By','Location','Action','Photo'], rows.map(r=>[r.qty,r.unit,r.product,r.pallet,r.bbDate,r.location,r.action,photoCell(r)]), ['6%','8%','20%','8%','11%','13%','15%'], [], [7]);
     } else {
       html += tbl(['Qty','Unit','Product Detail','Pallet #','BB/Use-By','Location','Action'], rows.map(r=>[r.qty,r.unit,r.product,r.pallet,r.bbDate,r.location,r.action]), ['7%','9%','27%','10%','13%','16%','18%']);
     }
-    t.push('PRODUCT CONTROL (FIFO)','-'.repeat(40));
+    t.push(TITLES.fifo.toUpperCase(),'-'.repeat(40));
     rows.forEach(r=>t.push(`Qty ${r.qty}${r.unit?' '+r.unit:''} — ${r.product||'[Product]'} | Pallet ${r.pallet||'—'} | ${r.bbDate||'—'} | ${r.location||'—'} | ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     t.push('');
   }
 
   if(included('qahold')){
     const rows = qaholdList.collect();
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">QA Hold Shelf</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.qahold)}</h2>`;
     if(rows.some(r=>r.photo && r.photoInclude)){
       html += tbl(['Qty','Unit','Product Detail','Supplier','Pallet #','BB/Use-By','Action','Photo'], rows.map(r=>[r.qty,r.unit,r.product,r.supplier,r.pallet,r.bbDate,r.action,photoCell(r)]), ['6%','7%','19%','11%','9%','11%','17%'], [], [7]);
     } else {
       html += tbl(['Qty','Unit','Product Detail','Supplier','Pallet #','BB/Use-By','Action'], rows.map(r=>[r.qty,r.unit,r.product,r.supplier,r.pallet,r.bbDate,r.action]), ['7%','8%','25%','14%','11%','14%','21%']);
     }
-    t.push('QA HOLD SHELF','-'.repeat(40));
+    t.push(TITLES.qahold.toUpperCase(),'-'.repeat(40));
     if(rows.length) rows.forEach(r=>t.push(`${r.qty||'—'}${r.unit?' '+r.unit:''} — ${r.product||'[Product]'} | Supplier: ${r.supplier||'—'} | Pallet ${r.pallet||'—'} | ${r.bbDate||'—'} | Action: ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     else t.push('None');
     t.push('');
@@ -854,13 +927,13 @@ function buildReport(){
 
   if(included('onqahold')){
     const rows = onQaHoldList.collect();
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">ON QA HOLD: For Inspection and Approval</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.onqahold)}</h2>`;
     if(rows.some(r=>r.photo && r.photoInclude)){
       html += tbl(['Qty','Unit','Description','Supplier','Pallet #','BB/Use-By','Location','Action','Photo'], rows.map(r=>[r.qty,r.unit,r.description,r.supplier,r.pallet,r.bbDate,r.location,r.action,photoCell(r)]), ['5%','6%','17%','9%','8%','9%','10%','14%'], [], [8]);
     } else {
       html += tbl(['Qty','Unit','Description','Supplier','Pallet #','BB/Use-By','Location','Action'], rows.map(r=>[r.qty,r.unit,r.description,r.supplier,r.pallet,r.bbDate,r.location,r.action]), ['6%','7%','22%','12%','10%','12%','13%','18%']);
     }
-    t.push('ON QA HOLD: FOR INSPECTION AND APPROVAL','-'.repeat(40));
+    t.push(TITLES.onqahold.toUpperCase(),'-'.repeat(40));
     if(rows.length) rows.forEach(r=>t.push(`${r.qty||'—'}${r.unit?' '+r.unit:''} — ${r.description||'[Description]'} | Supplier: ${r.supplier||'—'} | Pallet ${r.pallet||'—'} | ${r.bbDate||'—'} | ${r.location||'—'} | Action: ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     else t.push('None');
     t.push('');
@@ -868,13 +941,13 @@ function buildReport(){
 
   if(included('probe')){
     const rows = probeList.collect().filter(r => r.reading || r.comment || r.action || r.photo);
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Probe Calibration</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.probe)}</h2>`;
     if(rows.some(r=>r.photo && r.photoInclude)){
       html += tbl(['Probe ID','Reading','Comments','Action','Photo'], rows.length ? rows.map(r=>[r.id,r.reading,r.comment,r.action,photoCell(r)]) : [['None','','','','']], ['12%','11%','32%','24%'], [], [4]);
     } else {
       html += tbl(['Probe ID','Reading','Comments','Action'], rows.length ? rows.map(r=>[r.id,r.reading,r.comment,r.action]) : [['None','','','']], ['16%','14%','40%','30%']);
     }
-    t.push('PROBE CALIBRATION','-'.repeat(40));
+    t.push(TITLES.probe.toUpperCase(),'-'.repeat(40));
     if(rows.length) rows.forEach(r=>t.push(`${r.id||'—'}: ${r.reading||'—'} ${r.comment?'| '+r.comment:''}${r.action?' | Action: '+r.action:''}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     else t.push('None');
     t.push('');
@@ -882,13 +955,13 @@ function buildReport(){
 
   if(included('oxybaby')){
     const rows = oxybabyList.collect();
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Oxybaby Calibration</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.oxybaby)}</h2>`;
     if(rows.some(r=>r.photo && r.photoInclude)){
       html += tbl(['Unit ID','Reading','Comments','Action','Photo'], rows.map(r=>[r.unitId,r.reading,r.comment,r.action,photoCell(r)]), ['12%','11%','32%','24%'], [], [4]);
     } else {
       html += tbl(['Unit ID','Reading','Comments','Action'], rows.map(r=>[r.unitId,r.reading,r.comment,r.action]), ['16%','14%','40%','30%']);
     }
-    t.push('OXYBABY CALIBRATION','-'.repeat(40));
+    t.push(TITLES.oxybaby.toUpperCase(),'-'.repeat(40));
     if(rows.length) rows.forEach(r=>t.push(`${r.unitId||'—'}: ${r.reading||'—'} ${r.comment?'| '+r.comment:''}${r.action?' | Action: '+r.action:''}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     else t.push('None');
     t.push('');
@@ -896,19 +969,19 @@ function buildReport(){
 
   if(included('callouts')){
     const rows = calloutList.collect();
-    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">Callouts</h2>`;
+    html += `<h2 style="font-size:16px;font-weight:bold;margin:18px 0 6px;">${esc(TITLES.callouts)}</h2>`;
     if(rows.some(r=>r.photo && r.photoInclude)){
       html += tbl(['Item / Equipment','Issue','Action Required','Photo'], rows.length ? rows.map(r=>[r.item,r.issue,r.action,photoCell(r)]) : [['None','','','']], ['17%','32%','28%'], [], [3]);
     } else {
       html += tbl(['Item / Equipment','Issue','Action Required'], rows.length ? rows.map(r=>[r.item,r.issue,r.action]) : [['None','','']], ['22%','42%','36%']);
     }
-    t.push('CALLOUTS','-'.repeat(40));
+    t.push(TITLES.callouts.toUpperCase(),'-'.repeat(40));
     if(rows.length) rows.forEach(r=>t.push(`${r.item||'[Item]'} — ${r.issue||'[Issue]'} — Action: ${r.action||'—'}${(r.photo && r.photoInclude)?' (photo attached)':''}`));
     else t.push('None');
   }
 
-  html += `<h2 style="font-size:16px;font-weight:bold;margin:26px 0 4px;">Sleeve Wastage</h2>`;
-  t.push('', 'SLEEVE WASTAGE');
+  html += `<h2 style="font-size:16px;font-weight:bold;margin:26px 0 4px;">${esc(TITLES.sleeve)}</h2>`;
+  t.push('', TITLES.sleeve.toUpperCase());
 
   html += `</div>`;
   return { html, text: t.join('\n') };
@@ -1082,6 +1155,8 @@ document.getElementById('importFile').addEventListener('change', (e)=>{
       });
       LISTS = loadLists();
       renderLists();
+      TITLES = loadTitles();
+      renderTitles();
       // reload today's draft (or whichever date is currently selected) so the screen reflects the import
       const raw = localStorage.getItem('postop-draft-v2:' + document.getElementById('f_date').value);
       if(raw) applyState(JSON.parse(raw));
